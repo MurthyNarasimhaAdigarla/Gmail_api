@@ -62,16 +62,45 @@ public class GmailApiSend {
 
         String recipientsRaw = ConfigReader.get("recipients");
         System.out.println("Config loaded: recipientss=" + ConfigReader.getNullable("recipients"));// throws if missing
-        String[] recipients = Arrays.stream(recipientsRaw.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toArray(String[]::new);
-        MimeBodyPart textPart = new MimeBodyPart();
+        //String[] recipients = Arrays.stream(recipientsRaw.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toArray(String[]::new);
+        //MimeBodyPart textPart = new MimeBodyPart();
 
-        String from = ConfigReader.get("gmail.from");
+        // load config values (safe accessors)
+        String from = ConfigReader.getOrDefault("gmail.from", "<missing-from>");
         String subject = ConfigReader.getOrDefault("mail.subject", "No subject");
-        String raw = ConfigReader.get("mail.body");
+        String raw = ConfigReader.getNullable("mail.body");
         if (raw == null) raw = "";
+
+// handle both literal "\n" sequences and already-converted newlines
         String body = raw.contains("\\n") ? raw.replace("\\n", System.lineSeparator()) : raw;
-        textPart.setText(body);
+
+// set the email body part
+        MimeBodyPart textPart = new MimeBodyPart();
+        textPart.setText(body, "utf-8");
+
+// resume path (may be null)
         String resumePath = ConfigReader.getNullable("resume.path");
+
+// recipients (safe split and trim)
+        //String recipientsRaw = ConfigReader.getNullable("recipients");
+        String[] recipients = new String[0];
+        if (recipientsRaw != null && !recipientsRaw.isBlank()) {
+            recipients = Arrays.stream(recipientsRaw.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toArray(String[]::new);
+        }
+
+// Print everything to console in a clear format
+        System.out.println("=== Email configuration ===");
+        System.out.println("From       : " + from);
+        System.out.println("Subject    : " + subject);
+        System.out.println("Resume path: " + (resumePath == null ? "<none>" : resumePath));
+        System.out.println("Recipients : " + (recipients.length == 0 ? "<none>" : String.join(", ", recipients)));
+        System.out.println("Body (preview, first 300 chars):");
+        if (body.length() <= 300) {
+            System.out.println(body);
+        } else {
+            System.out.println(body.substring(0, 300) + "...");
+        }
+        System.out.println("===========================");
         File resume = (resumePath == null || resumePath.isBlank()) ? null : new File(resumePath);
         if (resume != null && (!resume.exists() || !resume.isFile())) {
             throw new IllegalStateException("Attachment file not found: " + resumePath);
