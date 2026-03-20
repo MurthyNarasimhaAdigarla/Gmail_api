@@ -61,7 +61,7 @@ public class GmailApiSend {
         // System.out.println("Config loaded: recipients=" + ConfigReader.getNullable("recipients"));
 
         String recipientsRaw = ConfigReader.get("recipients");
-        System.out.println("Config loaded: recipients=" + ConfigReader.getNullable("recipients"));// throws if missing
+        System.out.println("Config loaded: recipientss=" + ConfigReader.getNullable("recipients"));// throws if missing
         String[] recipients = Arrays.stream(recipientsRaw.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toArray(String[]::new);
         MimeBodyPart textPart = new MimeBodyPart();
 
